@@ -1,6 +1,6 @@
 from typing import List
 from fastapi import APIRouter, HTTPException, Query, status
-from app.models.patient import Patient, PatientCreate
+from app.models.patient import Patient, PatientCreate, PatientLogin
 from app.database import patient_collection
 from bson import ObjectId
 
@@ -26,6 +26,18 @@ async def create_patient(patient: PatientCreate):
         )
 
     return Patient(**new_patient)
+
+@router.post("/login", response_model=Patient, response_model_exclude={"password"})
+async def login_patient(credentials: PatientLogin):
+
+    patient = await patient_collection.find_one({"email": credentials.email})
+
+    if not patient or patient.get("password") != credentials.password:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Email ou Senha incorretos."
+        )
+    return Patient(**patient)
 
 @router.get("/", response_model=List[Patient])
 async def list_patients_by_observer(
@@ -67,3 +79,4 @@ async def get_patient(id: str):
         raise HTTPException(status_code=404, detail="Patient not found")
     
     return Patient(**patient)
+
