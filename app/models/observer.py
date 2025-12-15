@@ -12,3 +12,7 @@ class Observer(MongoBaseModel):
 class ObserverCreate(Observer):
     class Config:
         exclude = {'id'}
+
+class ObserverLogin(MongoBaseModel):
+    email: EmailStr
+    password: str

@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Query, status
 from typing import List
 from bson import ObjectId
 
-from app.models.observer import Observer, ObserverCreate
+from app.models.observer import Observer, ObserverCreate, ObserverLogin
 from app.models.patient import Patient
 from app.database import observer_collection, patient_collection
 
@@ -34,6 +34,18 @@ async def create_observer(observer: ObserverCreate):
         )
     
     return Observer(**new_observer)
+
+@router.post("/login", response_model=Observer, response_model_exclude={"password"})  
+async def login_observer(credentials: ObserverLogin):
+    observer = await observer_collection.find_one({"email": credentials.email})
+    
+    if not observer or observer.get("password") != credentials.password:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Email ou Senha incorretos."
+        )
+
+    return Observer(**observer)
 
 @router.get("/", response_model=List[Observer])
 async def list_observers_by_patient(

@@ -12,3 +12,7 @@ class Patient(MongoBaseModel):
 class PatientCreate(Patient):
     class Config:
         exclude = {'id'}
+
+class PatientLogin(MongoBaseModel):
+    email: EmailStr
+    password: str 
