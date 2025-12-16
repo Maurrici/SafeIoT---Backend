@@ -1,12 +1,11 @@
-# app/routes/fall_register.py
-
 from fastapi import APIRouter, HTTPException, status
 from typing import List
 from bson import ObjectId
 from datetime import datetime
 
-from app.models.fall_register import FallRegister, FallRegisterCreate
+from app.models.fall_register import FallRegister, FallRegisterCreate, FallRegisterResponse
 from app.models.fall_data import FallData
+from app.models.patient import Patient
 from app.database import fall_register_collection, patient_collection
 
 router = APIRouter(
@@ -55,7 +54,7 @@ async def create_fall_register(register_data: FallRegisterCreate):
     return FallRegister(**new_register)
 
 
-@router.get("/", response_model=List[FallRegister])
+@router.get("/", response_model=List[FallRegisterResponse]) 
 async def get_patient_fall_history(patient_id: str):
     
     if not ObjectId.is_valid(patient_id):
@@ -66,17 +65,23 @@ async def get_patient_fall_history(patient_id: str):
     
     pid = ObjectId(patient_id)
 
-    if await patient_collection.find_one({"_id": pid}) is None:
+    patient_doc = await patient_collection.find_one({"_id": pid})
+    
+    if patient_doc is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Paciente não encontrado."
         )
 
+    patient_obj = Patient(**patient_doc) 
+    print("CHEGOU AKI")
     cursor = fall_register_collection.find({"patient_id": pid}).sort("date", -1)
     
-    registers = []
-
+    registers_response: List[FallRegisterResponse] = []
+    print("CHEGOU AKI 2")
     async for doc in cursor:
-        registers.append(FallRegister(**doc))
+        doc['patient'] = patient_obj 
+        print("CHEGOU AKI 3")
+        registers_response.append(FallRegisterResponse(**doc))
         
-    return registers
+    return registers_response

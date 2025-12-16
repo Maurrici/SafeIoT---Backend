@@ -1,4 +1,4 @@
-from pydantic import EmailStr, Field
+from pydantic import EmailStr, Field, BaseModel
 from typing import List, Optional
 from app.models.base import MongoBaseModel, PyObjectId
 
@@ -13,6 +13,6 @@ class PatientCreate(Patient):
     class Config:
         exclude = {'id'}
 
-class PatientLogin(MongoBaseModel):
+class PatientLogin(BaseModel):
     email: EmailStr
     password: str 
