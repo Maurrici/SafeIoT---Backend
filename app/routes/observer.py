@@ -73,6 +73,27 @@ async def list_observers_by_patient(
         
     return observers
 
+@router.get("/search", status_code=status.HTTP_200_OK)
+async def search_user_by_email(email: str, target_type: str):
+    """
+    Busca um usuário pelo e-mail. 
+    target_type deve ser 'patient' ou 'observer'.
+    """
+    collection = patient_collection if target_type == "patient" else observer_collection
+    user = await collection.find_one({"email": email})
+    
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, 
+            detail=f"{target_type.capitalize()} not found with email {email}"
+        )
+    
+    return {
+        "id": str(user["_id"]),
+        "name": user["name"],
+        "email": user["email"]
+    }
+
 @router.get("/{id}", response_model=Observer)
 async def get_observer(id: str):
     """Retorna um observador pelo ID."""
